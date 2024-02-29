@@ -1,74 +1,44 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { map } from 'rxjs/operators';
-import { selectQueryParams } from '../../store/router';
-import { selectPagedTestData } from '../../store/testData';
-import { AppState, TestData } from '../../store/state';
-import { generateTestData } from '../../../lib/generate-data';
-import { setPageIndex, setSortColumn } from '../../store/router';
-import { BehaviorSubject, combineLatest } from 'rxjs';
-import { setTestData } from '../../store/testData';
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Store } from "@ngrx/store";
+import { ActivatedRoute, RouterModule } from "@angular/router";
+import { combineLatestWith, map } from "rxjs/operators";
+import { selectSortedTestData } from "../../store/testData";
+import { AppState } from "../../store/state";
+import { filterBy, pageData } from "../../../lib/data-ultils";
+import { DataTableFormComponent } from "../data-table-controls/data-table-controls.component";
 
 @Component({
-  selector: 'app-data-table',
+  selector: "app-data-table",
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <pre>queryParams: {{ queryParams$ | async | json }}</pre>
-    <input type="number" [ngModel]="pageQuery" (ngModelChange)="changePage($event)" />
-    <input type="search" [ngModel]="filterQuery" (ngModelChange)="filterQuerySubject.next($event)" placeholder="Search by title..." />
-    <table>
-      <thead>
-        <tr>
-          <th (click)="changeSortColumn(0)">Title</th>
-          <th (click)="changeSortColumn(1)">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of testData$ | async">
-          <td>{{ data.title }}</td>
-          <td>{{ data.status }}</td>
-        </tr>
-      </tbody>
-    </table>
-  `,
-  styleUrls: ['./data-table.component.scss'],
+  imports: [CommonModule, RouterModule, DataTableFormComponent],
+  templateUrl: "./data-table.component.html",
+  styleUrls: ["./data-table.component.scss"],
 })
 export class DataTableComponent {
-  filterQuerySubject = new BehaviorSubject<string>('');
-  pageQuerySubject = new BehaviorSubject<number>(0);
+  testData$ = this.store.select(selectSortedTestData).pipe(
+    combineLatestWith(this.route.queryParams),
+    map(([data, params]) => {
+      const filteredData = filterBy(data, "title", params["filterQuery"]);
+      return pageData(
+        filteredData,
+        Number(params["pageSize"]) || 20,
+        Number(params["pageIndex"]) || 0,
+      );
+    }),
+  );
 
-  filterQuery = ''; // To be used with ngModel for the filter input
-  pageQuery = 0; // To be used with ngModel for the page input
+  sortCol: number = 0;
+  sortDir: "des" | "asc" = "des";
 
-  testData$ = combineLatest([
-    this.store.select(selectPagedTestData),
-    this.filterQuerySubject.asObservable(),
-  ]).pipe(map(([data, query]) => this.filterData(data, query)));
+  constructor(
+    private store: Store<AppState>,
+    private route: ActivatedRoute,
+  ) {}
 
-  queryParams$ = this.store.select(selectQueryParams);
-
-  constructor(private store: Store<AppState>) {}
-
-  ngOnInit(): void {
-    const testData = generateTestData(10000);
-    this.store.dispatch(setTestData({ testData }));
-  }
-
-  filterData(data: TestData[], query: string) {
-    return data.filter((item) =>
-      item.title.toLowerCase().includes(query.toLowerCase())
-    );
-  }
-
-  changeSortColumn(newSortCol: number): void {
-    this.store.dispatch(setSortColumn({ sortCol: newSortCol }));
-  }
-
-  changePage(newPageIndex: number): void {
-    this.pageQuery = newPageIndex; // Update the pageQuery for ngModel binding
-    this.store.dispatch(setPageIndex({ pageIndex: newPageIndex }));
+  toggleSortDirection(column: number) {
+    this.sortDir =
+      this.sortCol === column && this.sortDir === "asc" ? "des" : "asc";
+    this.sortCol = column;
   }
 }

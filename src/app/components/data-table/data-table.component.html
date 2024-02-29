@@ -1,16 +1,31 @@
-<pre>params: {{ params$ | async | json }}</pre>
-<input type="text" [(ngModel)]="filterQuery" placeholder="Search by title..." />
+<app-data-table-form></app-data-table-form>
 <table>
   <thead>
-    <tr>
-      <th (click)="changeSortColumn(0)">Title</th>
-      <th (click)="changeSortColumn(1)">Status</th>
-    </tr>
+  <tr>
+    <th>
+      <a
+        (click)="toggleSortDirection(0)"
+        [queryParams]="{ sortDir, sortCol: 0 }"
+        [routerLink]="[]"
+        queryParamsHandling="merge"
+      >Title</a
+      >
+    </th>
+    <th>
+      <a
+        (click)="toggleSortDirection(1)"
+        [queryParams]="{ sortDir, sortCol: 1 }"
+        [routerLink]="[]"
+        queryParamsHandling="merge"
+      >Status</a
+      >
+    </th>
+  </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let data of (testData$ | async)">
-      <td>{{ data.title }}</td>
-      <td>{{ data.status }}</td>
-    </tr>
+  <tr *ngFor="let data of testData$ | async">
+    <td>{{ data.title }}</td>
+    <td>{{ data.status }}</td>
+  </tr>
   </tbody>
 </table>

@@ -1,5 +1,5 @@
-import { ConnectionState, TestData } from '../app/store/state';
-import { faker } from '@faker-js/faker';
+import { ConnectionState, TestData } from "../app/store/state";
+import { faker } from "@faker-js/faker";
 
 export function generateTestData(size: number = 2000): TestData[] {
   const testData: TestData[] = [];
@@ -9,8 +9,8 @@ export function generateTestData(size: number = 2000): TestData[] {
     testData.push({
       title: `${fakeUser.address.line1} ${fakeUser.address.city}, ${fakeUser.address.state}`,
       status: fakeUser.service[0].operationalStatus,
-      junk1: 'asdf',
-      junk2: 'asdf',
+      junk1: "asdf",
+      junk2: `EXTRA ${fakeUser.address.line1} ${fakeUser.address.city}, ${fakeUser.address.state}`,
     });
   }
 
@@ -29,21 +29,21 @@ function generateUserDataArray() {
   return {
     address: {
       line1: faker.location.streetAddress(),
-      line2: '',
+      line2: "",
       city: faker.location.city(),
       state: faker.location.state({ abbreviated: true }),
       zip: faker.location.zipCode(),
     },
     service: [
       {
-        name: 'bulkWifi',
+        name: "bulkWifi",
         operationalStatus: getRandomStatus(),
         macAddress: faker.internet.mac(),
       },
     ],
-    accountnumber: faker.finance.account(),
-    cAliasId: faker.datatype.uuid().slice(0, 8),
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName(),
+    accountnumber: faker.finance.accountNumber(),
+    cAliasId: faker.string.uuid().slice(0, 8),
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
   };
 }

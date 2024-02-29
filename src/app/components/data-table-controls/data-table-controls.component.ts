@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit } from "@angular/core";
+import { FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
 
 @Component({
-  selector: 'app-data-table-form',
+  selector: "app-data-table-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form">
       <div class="form-control">
@@ -19,26 +19,34 @@ import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
           type="search"
           formControlName="filterQuery"
           id="filterQuery"
-          placeholder="Search by title..." />
+          placeholder="Search by title..."
+        />
       </div>
     </form>
   `,
-  styleUrls: ['./data-table-controls.component.scss'],
+  styleUrls: ["./data-table-controls.component.scss"],
 })
 export class DataTableFormComponent implements OnInit {
-  @Output() formValuesChange = new EventEmitter<any>();
-
   form: FormGroup = new FormGroup({
-    filterQuery: new FormControl(''),
+    filterQuery: new FormControl(""),
     pageIndex: new FormControl(0),
     pageSize: new FormControl(20),
     sortCol: new FormControl(0),
-    sortDir: new FormControl('des'),
+    sortDir: new FormControl("des"),
   });
+
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.form.valueChanges.subscribe((values) => {
-      this.formValuesChange.emit(values);
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: values,
+        queryParamsHandling: "merge",
+      });
     });
   }
 }

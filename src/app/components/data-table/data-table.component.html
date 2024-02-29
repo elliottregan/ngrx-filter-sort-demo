@@ -1,0 +1,16 @@
+<pre>params: {{ params$ | async | json }}</pre>
+<input type="text" [(ngModel)]="filterQuery" placeholder="Search by title..." />
+<table>
+  <thead>
+    <tr>
+      <th (click)="changeSortColumn(0)">Title</th>
+      <th (click)="changeSortColumn(1)">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of (testData$ | async)">
+      <td>{{ data.title }}</td>
+      <td>{{ data.status }}</td>
+    </tr>
+  </tbody>
+</table>

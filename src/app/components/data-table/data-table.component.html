@@ -1,5 +1,7 @@
-<pre>params: {{ params$ | async | json }}</pre>
-<input type="text" [(ngModel)]="filterQuery" placeholder="Search by title..." />
+<form [formGroup]="form">
+  <input type="number" formControlName="pageIndex" />
+  <input type="search" formControlName="filterQuery" placeholder="Search by title..." />
+</form>
 <table>
   <thead>
     <tr>

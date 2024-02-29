@@ -1,29 +1,46 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { map } from 'rxjs/operators';
-import { selectQueryParams } from '../../store/router';
-import { selectPagedTestData } from '../../store/testData';
-import { AppState, TestData } from '../../store/state';
-import { generateTestData } from '../../../lib/generate-data';
-import { setPageIndex, setSortColumn } from '../../store/router';
-import { BehaviorSubject, combineLatest } from 'rxjs';
-import { setTestData } from '../../store/testData';
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
+import { Store } from "@ngrx/store";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { map } from "rxjs/operators";
+import { selectSortedTestData, setTestData } from "../../store/testData";
+import { AppState } from "../../store/state";
+import { generateTestData } from "../../../lib/generate-data";
+import { filterBy, pageData } from "../../../lib/data-ultils";
 
 @Component({
-  selector: 'app-data-table',
+  selector: "app-data-table",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
-    <pre>queryParams: {{ queryParams$ | async | json }}</pre>
-    <input type="number" [ngModel]="pageQuery" (ngModelChange)="changePage($event)" />
-    <input type="search" [ngModel]="filterQuery" (ngModelChange)="filterQuerySubject.next($event)" placeholder="Search by title..." />
+    <form [formGroup]="form">
+      <input type="number" formControlName="pageIndex" />
+      <input
+        type="search"
+        formControlName="filterQuery"
+        placeholder="Search by title..."
+      />
+    </form>
     <table>
       <thead>
         <tr>
-          <th (click)="changeSortColumn(0)">Title</th>
-          <th (click)="changeSortColumn(1)">Status</th>
+          <th>
+            <a
+              [routerLink]="[]"
+              [queryParams]="getSortParams(0)"
+              queryParamsHandling="merge"
+              >Title</a
+            >
+          </th>
+          <th>
+            <a
+              [routerLink]="[]"
+              [queryParams]="getSortParams(1)"
+              queryParamsHandling="merge"
+              >Status</a
+            >
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -34,41 +51,82 @@ import { setTestData } from '../../store/testData';
       </tbody>
     </table>
   `,
-  styleUrls: ['./data-table.component.scss'],
+  styleUrls: ["./data-table.component.scss"],
 })
 export class DataTableComponent {
-  filterQuerySubject = new BehaviorSubject<string>('');
-  pageQuerySubject = new BehaviorSubject<number>(0);
+  form: FormGroup = new FormGroup({
+    filterQuery: new FormControl(""),
+    pageIndex: new FormControl(0),
+    pageSize: new FormControl(20),
+    sortCol: new FormControl(0),
+    sortDir: new FormControl("des"),
+  });
 
-  filterQuery = ''; // To be used with ngModel for the filter input
-  pageQuery = 0; // To be used with ngModel for the page input
+  testData$ = this.store.select(selectSortedTestData).pipe(
+    map((data) => filterBy(data, "title", this.form.get("filterQuery")?.value)),
+    map((data) =>
+      pageData(
+        data,
+        this.form.get("pageSize")?.value,
+        this.form.get("pageIndex")?.value,
+      ),
+    ),
+  );
 
-  testData$ = combineLatest([
-    this.store.select(selectPagedTestData),
-    this.filterQuerySubject.asObservable(),
-  ]).pipe(map(([data, query]) => this.filterData(data, query)));
-
-  queryParams$ = this.store.select(selectQueryParams);
-
-  constructor(private store: Store<AppState>) {}
+  constructor(
+    private store: Store<AppState>,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {
+    this.subscribeToFormChanges();
+    this.subscribeToQueryParams();
+  }
 
   ngOnInit(): void {
-    const testData = generateTestData(10000);
+    const testData = generateTestData(1000);
     this.store.dispatch(setTestData({ testData }));
   }
 
-  filterData(data: TestData[], query: string) {
-    return data.filter((item) =>
-      item.title.toLowerCase().includes(query.toLowerCase())
+  getSortParams(column: number) {
+    const currentSortCol = this.form.get("sortCol")?.value;
+    const currentSortDir = this.form.get("sortDir")?.value;
+    let newSortDir = "asc";
+
+    if (currentSortCol === column && currentSortDir === "asc") {
+      newSortDir = "des";
+    }
+
+    return {
+      sortCol: column,
+      sortDir: newSortDir,
+    };
+  }
+
+  private subscribeToFormChanges() {
+    this.form.valueChanges.subscribe((formValues) => {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: formValues,
+        queryParamsHandling: "merge",
+      });
+    });
+  }
+
+  private subscribeToQueryParams() {
+    this.route.queryParams.subscribe(
+      ({ filterQuery, pageIndex, sortCol, pageSize, sortDir }) => {
+        console.log(+pageIndex);
+        this.form.patchValue(
+          {
+            filterQuery: filterQuery || "",
+            pageIndex: +pageIndex || 0,
+            pageSize: +pageSize || 20,
+            sortCol: +sortCol || 0,
+            sortDir: sortDir,
+          },
+          { emitEvent: false }, // Prevents infinite loop
+        );
+      },
     );
-  }
-
-  changeSortColumn(newSortCol: number): void {
-    this.store.dispatch(setSortColumn({ sortCol: newSortCol }));
-  }
-
-  changePage(newPageIndex: number): void {
-    this.pageQuery = newPageIndex; // Update the pageQuery for ngModel binding
-    this.store.dispatch(setPageIndex({ pageIndex: newPageIndex }));
   }
 }

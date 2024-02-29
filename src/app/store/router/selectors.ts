@@ -7,10 +7,10 @@ export const selectRouter =
 
 export const selectParams = createSelector(
   selectRouter,
-  (router) => router?.state?.params
+  (router) => router?.state?.params,
 );
 
 export const selectQueryParams = createSelector(
   selectRouter,
-  (router) => router?.state?.queryParams
+  (router) => router?.state?.queryParams,
 );

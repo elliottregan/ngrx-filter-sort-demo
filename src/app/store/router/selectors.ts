@@ -5,12 +5,7 @@ import { RouterState } from './router-state-serializer';
 export const selectRouter =
   createFeatureSelector<RouterReducerState<RouterState>>('router');
 
-export const selectParams = createSelector(
-  selectRouter,
-  (router) => router?.state?.params,
-);
-
 export const selectQueryParams = createSelector(
   selectRouter,
-  (router) => router?.state?.queryParams,
+  (router) => router.state.queryParams,
 );

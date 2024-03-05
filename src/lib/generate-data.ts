@@ -1,4 +1,4 @@
-import { ConnectionState, TestData } from "../app/store/state";
+import { ConnectionState, TestData } from "../app/store/testData/state";
 import { faker } from "@faker-js/faker";
 
 export function generateTestData(size: number = 2000): TestData[] {

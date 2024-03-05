@@ -16,6 +16,7 @@ export function sortTestData(
   data: TestData[],
   params: { [x: string]: any; sortDir?: any; sortCol?: any },
 ): TestData[] {
+  console.log('sortTestData', data, params)
   const { sortDir, sortCol } = params;
   return [...data].sort((a, b) => {
     const colKeys = Object.keys(a) as Array<keyof TestData>;
@@ -38,6 +39,5 @@ export function pageData(
 ): TestData[] {
   const startIndex = pageIndex * pageSize;
   const endIndex = startIndex + pageSize;
-  console.log(startIndex, endIndex);
   return data.slice(startIndex, endIndex);
 }

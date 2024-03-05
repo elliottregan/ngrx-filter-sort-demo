@@ -1,12 +1,10 @@
 import { Component } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { Store } from "@ngrx/store";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { combineLatestWith, map } from "rxjs/operators";
-import { selectSortedTestData } from "../../store/testData";
-import { AppState } from "../../store/state";
 import { filterBy, pageData } from "../../../lib/data-ultils";
 import { DataTableFormComponent } from "../data-table-controls/data-table-controls.component";
+import { TableDataFacadeService } from "../../store/testData/facade";
 
 @Component({
   selector: "app-data-table",
@@ -16,7 +14,7 @@ import { DataTableFormComponent } from "../data-table-controls/data-table-contro
   styleUrls: ["./data-table.component.scss"],
 })
 export class DataTableComponent {
-  testData$ = this.store.select(selectSortedTestData).pipe(
+  testData$ = this.facade.getTableData$.pipe(
     combineLatestWith(this.route.queryParams),
     map(([data, params]) => {
       const filteredData = filterBy(data, "title", params["filterQuery"]);
@@ -29,11 +27,12 @@ export class DataTableComponent {
   );
 
   sortCol: number = 0;
+  // TODO: use the real model
   sortDir: "des" | "asc" = "des";
 
   constructor(
-    private store: Store<AppState>,
     private route: ActivatedRoute,
+    private facade: TableDataFacadeService,
   ) {}
 
   toggleSortDirection(column: number) {
